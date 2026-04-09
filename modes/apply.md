@@ -92,6 +92,33 @@ Notas:
 - [Sugerencias de personalización que el candidato debería revisar]
 ```
 
+## Telegram Approval Gate — MANDATORY before any Submit
+
+**BEFORE clicking any submit, apply, or send button on a form, you MUST:**
+
+1. Import `sendApprovalRequest` from `telegram-approval.js`
+2. Call it with the job data:
+   ```js
+   import { sendApprovalRequest } from './telegram-approval.js';
+   const decision = await sendApprovalRequest({
+     company,   // string: company name
+     title,     // string: role title
+     score,     // string: e.g. "4.2"
+     grade,     // string: e.g. "A"
+     archetype, // string: detected archetype
+     reportPath // string: path to the .md report file in reports/
+   });
+   ```
+3. Handle the response:
+   - `'approve'`  → proceed with `page.click` on the submit button
+   - `'reject'`   → close the browser, log as `rejected-by-user` in applications.md, move to next job
+   - `'remind'`   → log as `pending-review` in applications.md, skip for now
+
+**This gate must fire ONCE per application, not per field or per page.**
+**NEVER click submit without receiving 'approve' from this gate.**
+
+---
+
 ## Paso 6 — Post-apply (opcional)
 
 Si el candidato confirma que envió la aplicación:

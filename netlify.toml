@@ -1,0 +1,9 @@
+[build]
+  publish = "output/"
+  command = "echo Static reports served"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
