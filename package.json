@@ -28,6 +28,7 @@
     "type": "git",
     "url": "https://github.com/santifer/career-ops"
   },
+  "type": "module",
   "license": "MIT",
   "dependencies": {
     "express": "4.21.2",

@@ -15,9 +15,12 @@ import { readFileSync, existsSync } from 'fs';
 
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const NODE_ENV = process.env.NODE_ENV || 'development';
-const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL; // Auto-injected by Render
 const PORT = process.env.PORT || 3000;
+
+// Use webhook mode when running on Render (RENDER_EXTERNAL_URL is always set by Render)
+// Use polling mode locally (no public URL needed)
+const IS_RENDER = !!RENDER_URL;
 
 if (!TOKEN) {
   console.error('[career-ops] TELEGRAM_BOT_TOKEN is not set in .env');
@@ -30,9 +33,9 @@ if (!CHAT_ID) {
 
 let bot;
 
-if (NODE_ENV === 'production') {
-  // Webhook mode for Render — no polling, public URL required
-  bot = new TelegramBot(TOKEN, { webHook: { port: PORT } });
+if (IS_RENDER) {
+  // Webhook mode for Render — Express server must listen on PORT
+  bot = new TelegramBot(TOKEN, { polling: false });
   const app = express();
   app.use(express.json());
 
@@ -42,20 +45,15 @@ if (NODE_ENV === 'production') {
   });
 
   app.get('/health', (_req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString(), mode: 'webhook' });
+    res.json({ status: 'ok', timestamp: new Date().toISOString(), mode: 'webhook', url: RENDER_URL });
   });
 
   app.listen(PORT, () => {
     console.log(`[career-ops] Webhook server listening on port ${PORT}`);
-  });
-
-  if (RENDER_URL) {
     bot.setWebHook(`${RENDER_URL}/telegram-webhook`)
       .then(() => console.log(`[career-ops] Webhook registered: ${RENDER_URL}/telegram-webhook`))
       .catch(err => console.error('[career-ops] Failed to register webhook:', err.message));
-  } else {
-    console.warn('[career-ops] RENDER_EXTERNAL_URL not set — webhook not registered automatically');
-  }
+  });
 } else {
   // Polling mode for local development
   bot = new TelegramBot(TOKEN, { polling: true });
